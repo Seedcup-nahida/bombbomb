@@ -1,0 +1,8 @@
+README.pdf
+__pycache__/
+
+*.iws
+*.ipr
+*.iml
+/shelf/
+/workspace.xml
