@@ -6,3 +6,5 @@ __pycache__/
 *.iml
 /shelf/
 /workspace.xml
+
+player.tar.gz
