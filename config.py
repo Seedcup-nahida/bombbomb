@@ -8,4 +8,5 @@ class Config(object):
     def get(self, query):
         return self.config.get(query)
 
+
 config = Config()
