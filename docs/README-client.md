@@ -80,7 +80,7 @@ client.send(initPacket)
 下面是使用client接收server返回信息并处理的代码逻辑示例，
 
 ```python
-resp = client.recv() # recieve response from server
+resp = client.recv() # receive response from server
 
 if resp.type == PacketType.ActionResp:
     action = parseRespAndTakeAction(resp)
@@ -89,7 +89,7 @@ elif resp.type == PacketType.GameOver:
     print("game over!")
 
 else:
-    logger->error("unknow response type")
+    logger->error("unknown response type")
     exit(-1)
 ```
 

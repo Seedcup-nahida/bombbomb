@@ -3,12 +3,12 @@ from typing import Union, List
 
 
 class ItemType(JsonIntEnum):
-    NO_POTION = 0
-    BOMB_RANGE = 1
-    BOMB_NUM = 2
-    HP = 3
-    INVINCIBLE = 4
-    SHIELD = 5
+    NO_POTION = 0  # 无药水
+    BOMB_RANGE = 1  # 炸弹范围增大
+    BOMB_NUM = 2  # 炸弹数量增加
+    HP = 3  # 血量增加
+    INVINCIBLE = 4  # 无敌
+    SHIELD = 5  # 护盾
 
 
 class ObjType(JsonIntEnum):

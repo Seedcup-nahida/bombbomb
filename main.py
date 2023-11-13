@@ -1,41 +1,27 @@
 import json
 import socket
-from base import *
+from threading import Thread
+from time import sleep
+
+import bot
 from req import *
 from resp import *
 from config import config
-from ui import UI
-import subprocess
-import logging
-from threading import Thread
-from itertools import cycle
-from time import sleep
 from logger import logger
-
 import sys
-import termios
-import tty
 
-# record the context of global data
 gContext = {
     "playerID": -1,
     "gameOverFlag": False,
-    "prompt": (
-        "Take actions!\n"
-        "'w': move up\n"
-        "'s': move down\n"
-        "'a': move left\n"
-        "'d': move right\n"
-        "'blank': place bomb\n"
-    ),
-    "steps": ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"],
     "gameBeginFlag": False,
+    "recvData": ActionResp(),
 }
 
 
 class Client(object):
     """Client obj that send/recv packet.
     """
+
     def __init__(self) -> None:
         self.config = config
         self.host = self.config.get("host")
@@ -77,13 +63,13 @@ class Client(object):
 
     def __enter__(self):
         return self
-    
+
     def close(self):
         logger.info("closing socket")
         self.socket.close()
         logger.info("socket closed successfully")
         self._connected = False
-    
+
     @property
     def connected(self):
         return self._connected
@@ -96,111 +82,75 @@ class Client(object):
         return True
 
 
-def cliGetInitReq():
-    """Get init request from user input."""
-    input("enter to start!")
-    return InitReq(config.get("player_name"))
-
-
-def recvAndRefresh(ui: UI, client: Client):
-    """Recv packet and refresh ui."""
+def recvAndRefresh(cli: Client):
     global gContext
-    resp = client.recv()
+    resp = cli.recv()
 
     if resp.type == PacketType.ActionResp:
         gContext["gameBeginFlag"] = True
         gContext["playerID"] = resp.data.player_id
-        ui.player_id = gContext["playerID"]
-
 
     while resp.type != PacketType.GameOver:
-        subprocess.run(["clear"])
-        ui.refresh(resp.data)
-        ui.display()
-        resp = client.recv()
-
-    print(f"Game Over!")
-
-    print(f"Final scores \33[1m{resp.data.scores}\33[0m")
-
-    if gContext["playerID"] in resp.data.winner_ids:
-        print("\33[1mCongratulations! You win! \33[0m")
-    else:
-        print(
-            "\33[1mThe goddess of victory is not on your side this time, but there is still a chance next time!\33[0m"
-        )
+        gContext["recvData"] = resp.data
+        resp = cli.recv()
+        # print("recv packet")
 
     gContext["gameOverFlag"] = True
-    print("press any key to quit")
+    print(f"Final scores \33[1m{resp.data.scores}\33[0m")
+    logger.info(f"Final scores {resp.data.scores}")
 
+    if gContext["playerID"] in resp.data.winner_ids:
+        print("win!")
+        logger.info("win!")
+    else:
+        print(f"lost! The winner is {resp.data.winner_ids}")
+        logger.info(f"lost! The winner is {resp.data.winner_ids}")
 
-
-key2ActionReq = {
-    'w': ActionType.MOVE_UP,
-    's': ActionType.MOVE_DOWN,
-    'a': ActionType.MOVE_LEFT,
-    'd': ActionType.MOVE_RIGHT,
-    ' ': ActionType.PLACED,
-}
-
-def termPlayAPI():
-    ui = UI()
-    
-    with Client() as client:
-        client.connect()
-        
-        initPacket = PacketReq(PacketType.InitReq, cliGetInitReq())
-        client.send(initPacket)
-        
-        # IO thread to display UI
-        t = Thread(target=recvAndRefresh, args=(ui, client))
-        t.start()
-        
-        print(gContext["prompt"])
-        for c in cycle(gContext["steps"]):
-            if gContext["gameBeginFlag"]:
-                break
-            print(
-                f"\r\033[0;32m{c}\033[0m \33[1mWaiting for the other player to connect...\033[0m",
-                flush=True,
-                end="",
-            )
-            sleep(0.1)
-
-        while not gContext["gameOverFlag"]:
-            # key = scr.getch()
-            old_settings = termios.tcgetattr(sys.stdin)
-            tty.setcbreak(sys.stdin.fileno())
-            key = sys.stdin.read(1)
-            termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-            
-            if key in key2ActionReq.keys():
-                action = ActionReq(gContext["playerID"], key2ActionReq[key])
-            else:
-                action = ActionReq(gContext["playerID"], ActionType.SILENT)
-            
-            if gContext["gameOverFlag"]:
-                break
-            
-            actionPacket = PacketReq(PacketType.ActionReq, action)
-            client.send(actionPacket)
 
 def botPlay():
-    '''This is just for bot play, not for human play.'''
-
+    """This is just for bot play, not for human play."""
     with Client as cli:
         cli.connect()
 
-        initPacket = PacketReq(PacketType.InitReq, cliGetInitReq())
-        cli.send(initPacket)
+        init_packet = PacketReq(PacketType.InitReq, InitReq(config.get("player_name")))
+        cli.send(init_packet)
 
+        t = Thread(target=recvAndRefresh, args=(cli,))
+        t.start()
+
+        print("Waiting for the other player to connect...")
+        logger.info("Waiting for the other player to connect...")
+        while not gContext["gameBeginFlag"]:
+            sleep(0.1)
+
+        print("Game begin!")
+        logger.info("Game begin!")
+
+        has_updated = False
+        step = 0
         while not gContext["gameOverFlag"]:
             # TODO: bot play
+            recv_data = gContext["recvData"]
+            if has_updated:
+                step = 0
+            if step >= config.get("player_speed"):
+                sleep(0.01)
+                if recv_data != gContext["recvData"]:
+                    has_updated = True
+                continue
 
-            actionPacket = PacketReq(PacketType.ActionReq, action)
-            cli.send(actionPacket)
+            action = bot.step(bot.packetDecode(recv_data, gContext["playerID"]), has_updated)
+            step += 1
 
+            if gContext["gameOverFlag"]:
+                break
+            action_packet = PacketReq(PacketType.ActionReq, ActionReq(gContext["playerID"], action))
+            cli.send(action_packet)
+            has_updated = recv_data == gContext["recvData"]
+
+        print("Game Over!")
+        logger.info("Game Over!")
 
 
 if __name__ == "__main__":
-    termPlayAPI()
+    botPlay()
