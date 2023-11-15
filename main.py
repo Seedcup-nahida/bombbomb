@@ -57,7 +57,7 @@ class Client(object):
                 break
 
         # uncomment this will show resp packet
-        # logger.info(f"recv PacketResp, content: {result}")
+        logger.info(f"recv PacketResp, content: {result}")
         packet = PacketResp().from_json(result)
         return packet
 
@@ -109,7 +109,7 @@ def recvAndRefresh(cli: Client):
 
 def botPlay():
     """This is just for bot play, not for human play."""
-    with Client as cli:
+    with Client() as cli:
         cli.connect()
 
         init_packet = PacketReq(PacketType.InitReq, InitReq(config.get("player_name")))
@@ -126,27 +126,22 @@ def botPlay():
         print("Game begin!")
         logger.info("Game begin!")
 
-        has_updated = False
-        step = 0
+        game_round = -1
         while not gContext["gameOverFlag"]:
-            # TODO: bot play
             recv_data = gContext["recvData"]
-            if has_updated:
-                step = 0
-            if step >= config.get("player_speed"):
+            if game_round == recv_data.round:
                 sleep(0.01)
-                if recv_data != gContext["recvData"]:
-                    has_updated = True
                 continue
+            game_round = recv_data.round
 
-            action = bot.step(bot.packetDecode(recv_data, gContext["playerID"]), has_updated)
-            step += 1
+            actions = bot.step(bot.packetDecode(recv_data, gContext["playerID"]))
 
             if gContext["gameOverFlag"]:
                 break
-            action_packet = PacketReq(PacketType.ActionReq, ActionReq(gContext["playerID"], action))
+
+            action_packet = PacketReq(PacketType.ActionReq,
+                                      [ActionReq(gContext["playerID"], action) for action in actions])
             cli.send(action_packet)
-            has_updated = recv_data == gContext["recvData"]
 
         print("Game Over!")
         logger.info("Game Over!")
