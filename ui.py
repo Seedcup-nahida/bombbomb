@@ -16,7 +16,7 @@ class Emoji(Enum):
     BlackBrick = "⬛"
     ObstacleBrick = "🧱"
     BombedBrick =  "💥"
-    NullBrick = "◻️ "
+    NullBlrick = "◻️ "
     
     # players
     Character1 = "🦸‍️"
@@ -79,7 +79,7 @@ class Block(object):
         
         elif obj is None or obj.type == ObjType.Null:
             self._removable = False
-            self._emoji = Emoji.NullBrick.emoji
+            self._emoji = Emoji.NullBlrick.emoji
         
         elif obj.type == ObjType.Player:
             if obj.property.invincible_time > 0:

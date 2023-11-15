@@ -36,6 +36,7 @@ gContext = {
 class Client(object):
     """Client obj that send/recv packet.
     """
+
     def __init__(self) -> None:
         self.config = config
         self.host = self.config.get("host")
@@ -71,7 +72,7 @@ class Client(object):
                 break
 
         # uncomment this will show resp packet
-        # logger.info(f"recv PacketResp, content: {result}")
+        logger.info(f"recv PacketResp, content: {result}")
         packet = PacketResp().from_json(result)
         return packet
 
@@ -98,8 +99,7 @@ class Client(object):
 
 def cliGetInitReq():
     """Get init request from user input."""
-    input("enter to start!")
-    return InitReq(config.get("player_name"))
+    return InitReq("python-client")
 
 
 def recvAndRefresh(ui: UI, client: Client):
@@ -168,7 +168,6 @@ def termPlayAPI():
             sleep(0.1)
 
         while not gContext["gameOverFlag"]:
-            # key = scr.getch()
             old_settings = termios.tcgetattr(sys.stdin)
             tty.setcbreak(sys.stdin.fileno())
             key = sys.stdin.read(1)
@@ -184,22 +183,6 @@ def termPlayAPI():
             
             actionPacket = PacketReq(PacketType.ActionReq, action)
             client.send(actionPacket)
-
-def botPlay():
-    '''This is just for bot play, not for human play.'''
-
-    with Client as cli:
-        cli.connect()
-
-        initPacket = PacketReq(PacketType.InitReq, cliGetInitReq())
-        cli.send(initPacket)
-
-        while not gContext["gameOverFlag"]:
-            # TODO: bot play
-
-            actionPacket = PacketReq(PacketType.ActionReq, action)
-            cli.send(actionPacket)
-
 
 
 if __name__ == "__main__":
