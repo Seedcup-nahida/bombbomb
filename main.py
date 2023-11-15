@@ -10,7 +10,6 @@ from config import config
 from logger import logger
 import sys
 
-# record the context of global data
 gContext = {
     "playerID": -1,
     "gameOverFlag": False,
