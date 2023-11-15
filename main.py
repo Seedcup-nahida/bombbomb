@@ -58,7 +58,7 @@ class Client(object):
                 break
 
         # uncomment this will show resp packet
-        # logger.info(f"recv PacketResp, content: {result}")
+        logger.info(f"recv PacketResp, content: {result}")
         packet = PacketResp().from_json(result)
         return packet
 
@@ -110,7 +110,7 @@ def recvAndRefresh(cli: Client):
 
 def botPlay():
     """This is just for bot play, not for human play."""
-    with Client as cli:
+    with Client() as cli:
         cli.connect()
 
         init_packet = PacketReq(PacketType.InitReq, InitReq(config.get("player_name")))
@@ -127,15 +127,21 @@ def botPlay():
         print("Game begin!")
         logger.info("Game begin!")
 
+        game_round = -1
         while not gContext["gameOverFlag"]:
-            # TODO: bot play
             recv_data = gContext["recvData"]
+            if game_round == recv_data.round:
+                sleep(0.01)
+                continue
+            game_round = recv_data.round
 
             actions = bot.step(bot.packetDecode(recv_data, gContext["playerID"]))
 
             if gContext["gameOverFlag"]:
                 break
-            action_packet = PacketReq(PacketType.ActionReq, ActionReq(gContext["playerID"], actions))
+
+            action_packet = PacketReq(PacketType.ActionReq,
+                                      [ActionReq(gContext["playerID"], action) for action in actions])
             cli.send(action_packet)
 
         print("Game Over!")
