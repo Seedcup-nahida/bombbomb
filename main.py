@@ -10,6 +10,7 @@ from config import config
 from logger import logger
 import sys
 
+# record the context of global data
 gContext = {
     "playerID": -1,
     "gameOverFlag": False,
@@ -126,27 +127,16 @@ def botPlay():
         print("Game begin!")
         logger.info("Game begin!")
 
-        has_updated = False
-        step = 0
         while not gContext["gameOverFlag"]:
             # TODO: bot play
             recv_data = gContext["recvData"]
-            if has_updated:
-                step = 0
-            if step >= config.get("player_speed"):
-                sleep(0.01)
-                if recv_data != gContext["recvData"]:
-                    has_updated = True
-                continue
 
-            action = bot.step(bot.packetDecode(recv_data, gContext["playerID"]), has_updated)
-            step += 1
+            actions = bot.step(bot.packetDecode(recv_data, gContext["playerID"]))
 
             if gContext["gameOverFlag"]:
                 break
-            action_packet = PacketReq(PacketType.ActionReq, ActionReq(gContext["playerID"], action))
+            action_packet = PacketReq(PacketType.ActionReq, ActionReq(gContext["playerID"], actions))
             cli.send(action_packet)
-            has_updated = recv_data == gContext["recvData"]
 
         print("Game Over!")
         logger.info("Game Over!")

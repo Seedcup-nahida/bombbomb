@@ -82,14 +82,16 @@ enum ActionType:// 动作类型
 """
 
 
-def step(data, has_updated) -> ActionType:
+def step(data) -> list[ActionType]:
     """make a decision based on the data received from the server.
 
     recvData is the data received from the server,
     hasUpdated is a flag indicating whether the data has been updated.
 
-    return the value of ActionType in req.py
+    return a list of values of ActionType in req.py and length less than {player.speed}
     """
     # TODO
+    actions = []
 
     pass
+    return actions
