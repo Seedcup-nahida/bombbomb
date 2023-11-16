@@ -3,7 +3,7 @@ import socket
 from threading import Thread
 from time import sleep
 
-import bot
+import bot_base
 from req import *
 from resp import *
 from config import config
@@ -82,31 +82,6 @@ class Client(object):
         return True
 
 
-def recvAndRefresh(cli: Client):
-    global gContext
-    resp = cli.recv()
-
-    if resp.type == PacketType.ActionResp:
-        gContext["gameBeginFlag"] = True
-        gContext["playerID"] = resp.data.player_id
-
-    while resp.type != PacketType.GameOver:
-        gContext["recvData"] = resp.data
-        resp = cli.recv()
-        # print("recv packet")
-
-    gContext["gameOverFlag"] = True
-    print(f"Final scores \33[1m{resp.data.scores}\33[0m")
-    logger.info(f"Final scores {resp.data.scores}")
-
-    if gContext["playerID"] in resp.data.winner_ids:
-        print("win!")
-        logger.info("win!")
-    else:
-        print(f"lost! The winner is {resp.data.winner_ids}")
-        logger.info(f"lost! The winner is {resp.data.winner_ids}")
-
-
 def botPlay():
     """This is just for bot play, not for human play."""
     with Client() as cli:
@@ -114,37 +89,37 @@ def botPlay():
 
         init_packet = PacketReq(PacketType.InitReq, InitReq(config.get("player_name")))
         cli.send(init_packet)
-
-        t = Thread(target=recvAndRefresh, args=(cli,))
-        t.start()
-
         print("Waiting for the other player to connect...")
         logger.info("Waiting for the other player to connect...")
-        while not gContext["gameBeginFlag"]:
-            sleep(0.1)
 
-        print("Game begin!")
-        logger.info("Game begin!")
+        resp = cli.recv()
 
-        game_round = -1
-        while not gContext["gameOverFlag"]:
-            recv_data = gContext["recvData"]
-            if game_round == recv_data.round:
-                sleep(0.01)
-                continue
-            game_round = recv_data.round
+        if resp.type == PacketType.ActionResp:
+            gContext["gameBeginFlag"] = True
+            gContext["playerID"] = resp.data.player_id
+            print(f"Game begin! You are player {gContext['playerID']}")
+            logger.info(f"Game begin! You are player {gContext['playerID']}")
 
-            actions = bot.step(bot.packetDecode(recv_data, gContext["playerID"]))
-
-            if gContext["gameOverFlag"]:
-                break
-
+        # TODO
+        while resp.type != PacketType.GameOver:
+            gContext["recvData"] = resp.data
+            actions = bot.step(bot.packetDecode(resp.data, gContext["playerID"]))
             action_packet = PacketReq(PacketType.ActionReq,
                                       [ActionReq(gContext["playerID"], action) for action in actions])
             cli.send(action_packet)
+            resp = cli.recv()
+            # print("recv packet")
 
-        print("Game Over!")
-        logger.info("Game Over!")
+        gContext["gameOverFlag"] = True
+        print(f"Final scores {resp.data.scores}")
+        logger.info(f"Final scores {resp.data.scores}")
+
+        if gContext["playerID"] in resp.data.winner_ids:
+            print("win!")
+            logger.info("win!")
+        else:
+            print(f"lost! The winner is {resp.data.winner_ids}")
+            logger.info(f"lost! The winner is {resp.data.winner_ids}")
 
 
 if __name__ == "__main__":
