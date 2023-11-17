@@ -5,22 +5,6 @@ from config import config
 from resp import ObjType, ActionResp
 
 
-def step(data: dict) -> list[ActionType]:
-    """make a decision based on the data received from the server.
-
-    recvData is the data received from the server,
-    hasUpdated is a flag indicating whether the data has been updated.
-
-    return a list of values of ActionType in req.py and length less than {player.speed}
-    """
-    # TODO
-    actions = []  # ATTENTION: len(actions) <= player.speed, equal to player.speed is recommended
-
-    # test code below, only set bombs
-    actions.append(ActionType.PLACED)
-    return actions
-
-
 class BlockType(Enum):
     EMPTY = 0
     BLOCK = 1  # 任何挡路的东西
@@ -46,12 +30,18 @@ bombs_counter = []
 
 def bombDecode(round, block, prop) -> dict:
     bomb = prop
-    if bomb["round"] == round:
-        bombs_counter.append(bomb["bomb_id"])
-    bomb["round"] = 0
+    flag = False
     for b in bombs_counter:
         if b["bomb_id"] == bomb["bomb_id"]:
             bomb["round"] = round - b["round"]
+            flag = True
+            break
+    if not flag:
+        bombs_counter.append({
+            "bomb_id": bomb["bomb_id"],
+            "round": round
+        })
+        bomb["round"] = 0
     bomb["x"] = block.x
     bomb["y"] = block.y
     bomb["bombed"] = False
@@ -107,3 +97,11 @@ def packetDecode(recv_data: ActionResp, player_id) -> dict:
 def clone_map(map: list[list[int]]):
     """in case of modifying the map"""
     return [[map[x][y] for y in range(len(map[x]))] for x in range(len(map))]
+
+
+def get_current_player(players: list[dict], player_id: int):
+    for player in players:
+        if player["player_id"] == player_id:
+            return player
+    raise Exception("player not found")
+
