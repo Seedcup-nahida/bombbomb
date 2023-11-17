@@ -1,21 +1,16 @@
 import json
 import socket
+import time
 from threading import Thread
 from time import sleep
 
+import bot
 import bot_base
 from req import *
 from resp import *
 from config import config
 from logger import logger
 import sys
-
-gContext = {
-    "playerID": -1,
-    "gameOverFlag": False,
-    "gameBeginFlag": False,
-    "recvData": ActionResp(),
-}
 
 
 class Client(object):
@@ -82,44 +77,58 @@ class Client(object):
         return True
 
 
+def recvAndResp(data: dict, cli: Client, player_id: int):
+    stime = time.time_ns()
+    actions = bot.game_update(data, player_id)
+    etime = time.time_ns()
+
+    if (etime - stime) < 1e6 * config.get("round_interval_value"):
+        action_req = PacketReq(PacketType.ActionReq,
+                               [ActionReq(player_id, action) for action in actions])
+        cli.send(action_req)
+    else:
+        logger.info(f"round {data['round']} time out, time: {(etime - stime) / 1e6}ms")
+        print(f"round {data['round']} time out, time: {(etime - stime) / 1e6}ms")
+        return
+
+
 def botPlay():
-    """This is just for bot play, not for human play."""
+    player_id = -1
     with Client() as cli:
         cli.connect()
 
-        init_packet = PacketReq(PacketType.InitReq, InitReq(config.get("player_name")))
-        cli.send(init_packet)
-        print("Waiting for the other player to connect...")
-        logger.info("Waiting for the other player to connect...")
+        init_req = PacketReq(PacketType.InitReq, InitReq(config.get("player_name")))
+        cli.send(init_req)
 
-        resp = cli.recv()
-
-        if resp.type == PacketType.ActionResp:
-            gContext["gameBeginFlag"] = True
-            gContext["playerID"] = resp.data.player_id
-            print(f"Game begin! You are player {gContext['playerID']}")
-            logger.info(f"Game begin! You are player {gContext['playerID']}")
-
-        # TODO
-        while resp.type != PacketType.GameOver:
-            gContext["recvData"] = resp.data
-            actions = bot.step(bot.packetDecode(resp.data, gContext["playerID"]))
-            action_packet = PacketReq(PacketType.ActionReq,
-                                      [ActionReq(gContext["playerID"], action) for action in actions])
-            cli.send(action_packet)
-            resp = cli.recv()
-            # print("recv packet")
-
-        gContext["gameOverFlag"] = True
-        print(f"Final scores {resp.data.scores}")
-        logger.info(f"Final scores {resp.data.scores}")
-
-        if gContext["playerID"] in resp.data.winner_ids:
-            print("win!")
-            logger.info("win!")
+        packet_resp = cli.recv()
+        if packet_resp.type == PacketType.ActionResp:
+            player_id = packet_resp.data.player_id
+            logger.info(f"player_id: {player_id}")
+            print(f"player_id: {player_id}")
         else:
-            print(f"lost! The winner is {resp.data.winner_ids}")
-            logger.info(f"lost! The winner is {resp.data.winner_ids}")
+            logger.error("init failed")
+            exit(-1)
+
+        data = bot_base.packetDecode(packet_resp.data, player_id)
+        bot.game_init(data, player_id)
+
+        while True:
+            t = Thread(target=recvAndResp, args=(data, cli, player_id))
+            t.start()
+
+            packet_resp = cli.recv()
+            if packet_resp.type == PacketType.ActionResp:
+                data = bot_base.packetDecode(packet_resp.data, player_id)
+            elif packet_resp.type == PacketType.GameOver:
+                logger.info("game over")
+                break
+
+        if player_id in packet_resp.data.winner_ids:
+            logger.info("you win")
+        else:
+            logger.info("you lose")
+        logger.info(packet_resp.data)
+        print(packet_resp.data)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 from bot_base import *
 from resp import ItemType
 
-
 """
 enum ActionType:// 动作类型
   SILENT = 0, // 静止不动
@@ -12,7 +11,11 @@ enum ActionType:// 动作类型
   PLACED = 5, // 放置炸弹或者道具
 """
 
-def step(data: dict) -> list[ActionType]:
+
+box_count = 0
+
+
+def game_update(data: dict, player_id: int) -> list[ActionType]:
     """make a decision based on the data received from the server.
 
     recvData is the data received from the server,
@@ -26,3 +29,14 @@ def step(data: dict) -> list[ActionType]:
     # test code below, only set bombs
     actions.append(ActionType.PLACED)
     return actions
+
+
+def game_init(data: dict, player_id: int):
+    """"param data is the same of step function,
+    will be called when game start
+    """
+    for block_row in data["map"]:
+        for b in block_row:
+            if BlockType.BOX.match(b):
+                global box_count
+                box_count += 1
