@@ -1,5 +1,7 @@
 from bot_base import *
 from resp import ItemType
+from self_help import *
+# from value import *
 
 """
 enum ActionType:// 动作类型
@@ -24,10 +26,23 @@ def game_update(data: dict, player_id: int) -> list[ActionType]:
     return a list of values of ActionType in req.py and length less than {player.speed}
     """
     # TODO
+    step = 2
     actions = []  # ATTENTION: len(actions) <= player.speed, equal to player.speed is recommended
-
-    # test code below, only set bombs
-    actions.append(ActionType.PLACED)
+    actions_signal = []
+    actions_signal.append(scan_danger(data))
+    for i in range(len(actions_signal)):
+        for action in actions_signal[i]:
+            if action == 0:
+                actions.append(ActionType.PLACED)
+            elif action == 1:
+                actions.append(ActionType.MOVE_LEFT)
+            elif action == 2:
+                actions.append(ActionType.MOVE_RIGHT)
+            elif action == 3:
+                actions.append(ActionType.MOVE_DOWN)
+            elif action == 4:
+                actions.append(ActionType.MOVE_UP)
+    print(actions)
     return actions
 
 

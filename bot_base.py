@@ -105,3 +105,8 @@ def get_current_player(players: list[dict], player_id: int):
             return player
     raise Exception("player not found")
 
+
+def get_enemy_players(players: list[dict], player_id: int) -> list[dict]:
+    """return a list of enemy players
+    player_id is the id of the current player"""
+    return [player for player in players if player["player_id"] != player_id]
