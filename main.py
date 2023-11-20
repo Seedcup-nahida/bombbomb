@@ -52,7 +52,7 @@ class Client(object):
                 break
 
         # uncomment this will show resp packet
-        logger.info(f"recv PacketResp, content: {result}")
+        # logger.info(f"recv PacketResp, content: {result}")
         packet = PacketResp().from_json(result)
         return packet
 

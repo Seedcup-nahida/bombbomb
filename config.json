@@ -33,6 +33,6 @@
   "epoll_timeout": 10,
   "log_print_stdout": true,
 
-  "host": "0.0.0.0",
+  "host": "192.168.125.128",
   "port": 9999
 }
