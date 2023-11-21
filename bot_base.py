@@ -129,4 +129,4 @@ def convert_list_to_direction(offset: list[int], y=None) -> ActionType:
     elif offset == [-1, 0]:
         return ActionType.MOVE_UP
     else:
-        raise Exception("unknown direction")
+        raise Exception(f"unknown direction: {offset}")
