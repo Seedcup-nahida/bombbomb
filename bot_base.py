@@ -110,3 +110,23 @@ def get_enemy_players(players: list[dict], player_id: int) -> list[dict]:
     """return a list of enemy players
     player_id is the id of the current player"""
     return [player for player in players if player["player_id"] != player_id]
+
+
+def convert_list_to_direction(offset: list[int], y=None) -> ActionType:
+    """param list is a list of int [x, y]"""
+    if isinstance(offset, int) and y is not None:
+        # offset is a int
+        offset = [offset, y]
+
+    if offset == [0, 0]:
+        return ActionType.SILENT
+    elif offset == [0, -1]:
+        return ActionType.MOVE_LEFT
+    elif offset == [0, 1]:
+        return ActionType.MOVE_RIGHT
+    elif offset == [1, 0]:
+        return ActionType.MOVE_DOWN
+    elif offset == [-1, 0]:
+        return ActionType.MOVE_UP
+    else:
+        raise Exception(f"unknown direction: {offset}")

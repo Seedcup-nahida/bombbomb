@@ -1,11 +1,7 @@
 *.pdf
 __pycache__/
 
-*.iws
-*.ipr
-*.iml
-/shelf/
-/workspace.xml
+.idea/
 
 player.tar.gz
 teamkey.txt

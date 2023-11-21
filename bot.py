@@ -17,40 +17,25 @@ enum ActionType:// 动作类型
 box_count = 0
 
 
-def game_update(data: dict, player_id: int) -> list[ActionType]:
+def game_update(player_id: int, round: int, map: list[list[dict]], players: list[dict], bombs: list[dict], items: list[list[dict]]) -> list[ActionType]:
     """make a decision based on the data received from the server.
-
-    recvData is the data received from the server,
-    hasUpdated is a flag indicating whether the data has been updated.
 
     return a list of values of ActionType in req.py and length less than {player.speed}
     """
     # TODO
     step = 2
     actions = []  # ATTENTION: len(actions) <= player.speed, equal to player.speed is recommended
-    actions_signal = []
-    actions_signal.append(scan_danger(data))
-    for i in range(len(actions_signal)):
-        for action in actions_signal[i]:
-            if action == 0:
-                actions.append(ActionType.PLACED)
-            elif action == 1:
-                actions.append(ActionType.MOVE_LEFT)
-            elif action == 2:
-                actions.append(ActionType.MOVE_RIGHT)
-            elif action == 3:
-                actions.append(ActionType.MOVE_DOWN)
-            elif action == 4:
-                actions.append(ActionType.MOVE_UP)
-    print(actions)
+    map_danger = scan_map_danger(map, bombs, players, player_id)
+    for action in scan_danger(player_id, round, map, players, bombs, map_danger):
+        actions.append(action)
     return actions
 
 
-def game_init(data: dict, player_id: int):
+def game_init(player_id, round, map, players, bombs, items):
     """"param data is the same of step function,
     will be called when game start
     """
-    for block_row in data["map"]:
+    for block_row in map:
         for b in block_row:
             if BlockType.BOX.match(b):
                 global box_count
