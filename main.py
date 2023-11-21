@@ -77,9 +77,9 @@ class Client(object):
         return True
 
 
-def recvAndResp(data: dict, cli: Client, player_id: int):
+def recvAndResp(cli: Client, player_id: int, round: int, map: list[list[dict]], players: list[dict], bombs: list[dict], items: list[list[dict]]):
     stime = time.time_ns()
-    actions = bot.game_update(data, player_id)
+    actions = bot.game_update(player_id, round, map, players, bombs, items)
     etime = time.time_ns()
 
     if (etime - stime) < 1e6 * config.get("round_interval_value"):
@@ -87,9 +87,8 @@ def recvAndResp(data: dict, cli: Client, player_id: int):
                                [ActionReq(player_id, action) for action in actions])
         cli.send(action_req)
     else:
-        logger.info(f"round {data['round']} time out, time: {(etime - stime) / 1e6}ms")
-        print(f"round {data['round']} time out, time: {(etime - stime) / 1e6}ms")
-        return
+        logger.error(f"round {round} timeout: {(etime - stime) / 1e6}ms")
+        print(f"round {round} timeout: {(etime - stime) / 1e6}ms")
 
 
 def botPlay():
@@ -110,18 +109,29 @@ def botPlay():
             exit(-1)
 
         data = bot_base.packetDecode(packet_resp.data, player_id)
-        bot.game_init(data, player_id)
+        round = data["round"]
+        map = data["map"]
+        players = data["players"]
+        bombs = data["bombs"]
+        items = data["items"]
+        bot.game_init(player_id, round, map, players, bombs, items)
 
         while True:
-            t = Thread(target=recvAndResp, args=(data, cli, player_id))
-            t.start()
-
-            packet_resp = cli.recv()
             if packet_resp.type == PacketType.ActionResp:
                 data = bot_base.packetDecode(packet_resp.data, player_id)
+                round = data["round"]
+                map = data["map"]
+                players = data["players"]
+                bombs = data["bombs"]
+                items = data["items"]
+
+                t = Thread(target=recvAndResp, args=(cli, player_id, round, map, players, bombs, items))
+                t.start()
             elif packet_resp.type == PacketType.GameOver:
                 logger.info("game over")
                 break
+
+            packet_resp = cli.recv()
 
         if player_id in packet_resp.data.winner_ids:
             logger.info("you win")
