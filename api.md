@@ -1,3 +1,5 @@
+接口文档
+
 ## 函数定义
 ```python
 def step(data: dict) -> list[ActionType]:
@@ -8,12 +10,6 @@ def step(data: dict) -> list[ActionType]:
 
 | 名称 | 类型 | 说明 |
 | --- | --- | --- |
-| data | dict | 就是传入的参数 |
-
----
- ### `data`
-| 名称 | 类型 | 说明 |
-| --- | --- | --- |
 | player_id | int | 玩家id |
 | round | int | 当前回合 |
 | map | list[list[int]]（二维数组[x][y]） | 地图，只包含方格的类型 |
@@ -22,7 +18,7 @@ def step(data: dict) -> list[ActionType]:
 | items | list[list[int]] | 场上所有道具（坐标同`map`）|
 
 ---
-### `data["map"]`
+### `map`
 ```python
 class BlockType(Enum):
     EMPTY = 0
@@ -41,44 +37,35 @@ BlockType.BLOCK 指任何阻挡玩家移动的物体，同时也是阻挡炸弹�
 特别的，当且仅当`block_type == 0` 时 `BlockType.EMPTY.match(block_type) == True`
 
 ---
-### `data["players"][index]`
+### `players[index]`
 | 名称 | 类型 | 说明 |
 | --- | --- | --- |
 | x | int | 坐标x |
 | y | int | 坐标y |
-
-```json
-{
-    "player_id": 0,       // 玩家id
-    "alive": true,        // 是否存活
-    "hp": 100,            // 血量
-    "shield_time": 2,     // 护盾剩余回合数
-    "invincible_time": 2, // 无敌回合数
-    "score": 10,          // 当前总分数
-    "bomb_range": 5,      // 炸弹爆炸范围
-    "bomb_max_num": 2,    // 炸弹数量上限
-    "bomb_now_num": 1     // 当前剩余炸弹
-    "speed":2             // 玩家的移动速度
-}
-```
+| player_id | int | 玩家id |
+| alive | bool | 是否存活 |
+| hp | int | 血量(上限为3) |
+| shield_time | int | 护盾剩余回合数 |
+| invincible_time | int | 无敌回合数 |
+| score | int | 当前分数 |
+| bomb_range | int | 炸弹爆炸范围 |
+| bomb_max_num | int | 炸弹数量上限 |
+| bomb_now_num | int | 当前剩余炸弹 |
+| speed | int | 玩家的移动速度(每回合行动数) |
 
 ---
-### `data["bombs"][index]`
+### `bombs[index]`
 | 名称 | 类型 | 说明 |
 | --- | --- | --- |
 | x | int | 坐标x |
 | y | int | 坐标y |
 | round | int | 存续时间 |
-```json
-{
-    "bomb_id": 0,       // 炸弹id
-    "bomb_range": 5,    // 炸弹范围
-    "player_id": 2      // 炸弹放置人
-}
-```
+| bomb_id | int | 炸弹 id |
+| bomb_range | int | 炸弹范围 |
+| player_id | int | 炸弹放置者 |
 
 ---
-### `data["items"][x][y]`
+### `items[x][y]`
 ```py
 class ItemType(JsonIntEnum):
     NO_POTION = 0  # 无药水
@@ -110,4 +97,6 @@ for key in a_dict:
 for key, value in a_dict.items():
 	...
 ```
+
 ### 如何判断某方格的类型
+`BlockType.{TYPE}.match(map[x][y])` 返回 bool 值
