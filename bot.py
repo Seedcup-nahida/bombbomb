@@ -1,7 +1,7 @@
 from bot_base import *
 from resp import ItemType
 from self_help import *
-# from value import *
+from value import *
 
 """
 enum ActionType:// 动作类型
@@ -26,8 +26,15 @@ def game_update(player_id: int, round: int, map: list[list[dict]], players: list
     step = 2
     actions = []  # ATTENTION: len(actions) <= player.speed, equal to player.speed is recommended
     map_danger = scan_map_danger(map, bombs, players, player_id)
-    for action in scan_danger(player_id, round, map, players, bombs, map_danger):
+
+    actions_danger = scan_danger(player_id, round, map, players, bombs, map_danger)
+    for action in actions_danger:
         actions.append(action)
+    step -= len(actions_danger)
+    if step > 0:
+        actions_value = scan_value(step, player_id, round, map, players, bombs, items, map_danger)
+        for action in actions_value:
+            actions.append(action)
     return actions
 
 
