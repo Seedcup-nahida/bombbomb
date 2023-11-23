@@ -1,9 +1,11 @@
 from random import *
 from bot_base import *
+from collections import deque
 
 direction_list = [[0, -1], [0, 1], [1, 0], [-1, 0]]
 judge_value_gap = 150
 distance_decay = 0.7
+distance_warning = 4
 
 def scan_value(step, player_id, map, players, items, map_danger, level):
     map_value = [[0 for _ in range(15)] for _ in range(15)]
@@ -39,7 +41,7 @@ def mark_value(x, y, map, items, map_value, level, player, enemies):
                     map_value += 10
         return
 
-    queue=[{"x": x, "y": y, "depth": 0, "value": init_value(items[x][y], level, player, enemies)}]
+    queue=[{"x": x, "y": y, "depth": 0, "value": init_value(items[x][y], level, player, enemies, x, y)}]
     depth_max = 6
 
     while queue:
@@ -141,6 +143,74 @@ def move(step, player, map, map_value, map_danger, enemies, level):
     return actions
 
 
-def init_value(item_type, level, player, enemies):
-    pass
-    return 1
+def init_value(item_type, level, player, enemies, x, y):
+    if item_type == item_type.NO_POTION:
+        return 0
+    elif item_type == item_type.BOMB_RANGE:
+        if level == 1:
+            return 3
+        elif level == 2:
+            return 4
+    elif item_type == item_type.BOMB_NUM:
+        if level == 1:
+            return 2
+        elif level == 2:
+            return 3
+        #可能需要参数判断对战是否执行
+    elif item_type == item_type.HP:
+        if player["hp"] < 3:
+            return (5-player["hp"])
+        elif player["hp"] == 3:
+            for enemy in enemies:
+                if item_to_enemy(map, enemy, x, y) != -1 and item_to_enemy(map, enemy, x, y) != 0:
+                    if 2 < item_to_enemy(map, enemy, x, y) <= distance_warning and enemy["hp"] < 3: 
+                        return 3
+                    elif item_to_enemy(map, enemy, x, y) > distance_warning or enemy["hp"] == 3:
+                        return 0
+                else :
+                    return 0
+    elif item_type == item_type.INVINCIBLE:
+        if level == 1:
+            return 4
+        elif level == 2:
+            return 5
+    elif item_type == item_type.SHIELD:
+        if player["hp"] < 2:
+            return 3
+        else:
+            return 2
+        #可能需要参数判断对战是否执行
+
+#左，右，下，上
+#direction_list = [[0, -1], [0, 1], [1, 0], [-1, 0]]
+def item_to_enemy(map, enemy, x_item, y_item):
+    # 创建一个队列用于广度优先搜索
+    queue = deque([(enemy["x"], enemy["y"])])
+    # 创建一个集合用于记录已经访问过的格子
+    visited = set()
+    step = 0
+
+    while queue:
+        # 出队列
+        x, y = queue.popleft()
+
+        # 检查是否到达终点
+        if (x, y) == (x_item, y_item):
+            return step
+
+        # 标记当前格子为已访问
+        visited.add((x, y))
+
+        # 尝试向四个方向移动
+        for dx, dy in direction_list:
+            nx, ny = x + dx, y + dy
+
+            # 检查是否在地图范围内，并且未访问过，并且不是障碍物
+            if 0 <= nx < 15 and 0 <= ny < 15 and (nx, ny) not in visited and map[nx][ny] != 1:
+                # 入队列，距离加一
+                queue.append((nx, ny))
+                step += 1
+
+    # 如果未找到路径，返回-1表示无解
+    return -1
+    
