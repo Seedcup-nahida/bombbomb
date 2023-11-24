@@ -4,6 +4,8 @@ from req import ActionType
 from config import config
 from resp import ObjType, ActionResp
 
+direction_list = ((0, -1), (0, 1), (1, 0), (-1, 0))  # 左，右，下，上 unchangeable
+
 
 class BlockType(Enum):
     EMPTY = 0
@@ -112,21 +114,22 @@ def get_enemy_players(players: list[dict], player_id: int) -> list[dict]:
     return [player for player in players if player["player_id"] != player_id]
 
 
-def convert_list_to_direction(offset: list[int], y=None) -> ActionType:
-    """param list is a list of int [x, y]"""
+def convert_direction(offset: [list[int] | tuple], y=None) -> ActionType:
+    """param list is a tuple of int [x, y]"""
     if isinstance(offset, int) and y is not None:
-        # offset is a int
-        offset = [offset, y]
+        offset = (offset, y)
+    if isinstance(offset, list):
+        offset = tuple(offset)
 
-    if offset == [0, 0]:
+    if offset == (0, 0):
         return ActionType.SILENT
-    elif offset == [0, -1]:
+    elif offset == (0, -1):
         return ActionType.MOVE_LEFT
-    elif offset == [0, 1]:
+    elif offset == (0, 1):
         return ActionType.MOVE_RIGHT
-    elif offset == [1, 0]:
+    elif offset == (1, 0):
         return ActionType.MOVE_DOWN
-    elif offset == [-1, 0]:
+    elif offset == (-1, 0):
         return ActionType.MOVE_UP
     else:
         raise Exception(f"unknown direction: {offset}")

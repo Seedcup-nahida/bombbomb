@@ -80,6 +80,8 @@ class Client(object):
 def recvAndResp(cli: Client, player_id: int, round: int, map: list[list[dict]], players: list[dict], bombs: list[dict], items: list[list[dict]]):
     stime = time.time_ns()
     actions = bot.game_update(player_id, round, map, players, bombs, items)
+    if actions:
+        print(f"round {round}, actions: {actions}")
     etime = time.time_ns()
 
     if (etime - stime) < 1e6 * config.get("round_interval_value"):
