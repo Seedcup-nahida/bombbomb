@@ -108,13 +108,14 @@ def run(player, map, map_danger):
         x = player["x"]
         y = player["y"]
         for i in range(len(dire_actions)):
-            # TODO
             for direction in direction_list:
                 nx, ny = x + direction[0], y + direction[1]
+                if not (0 <= nx < len(map) and 0 <= ny < len(map[0])):
+                    continue
                 if BlockType.BLOCK.match(map[nx][ny]):
                     continue
                 elif map_danger[nx][ny] > time_left[i]:
-                    time_left = map_danger[nx][ny]
+                    time_left[i] = map_danger[nx][ny]
                     dire_actions[i] = direction
                 elif map_danger[nx][ny] == time_left[i]:
                     pass

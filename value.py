@@ -20,7 +20,7 @@ def scan_value(step, player_id, map, players, items, map_danger, level):
         for y in range(len(map[0])):
             mark_value(x, y, map, items, map_value, level, player, enemies)
 
-    if player["bomb_now_num"] > 0:
+    if player["bomb_now_num"] < player["bomb_max_num"]:
         bomb_action = put_bomb(player, map, items, enemies, map_value, level)
         if bomb_action:
             actions.append(bomb_action)
@@ -69,7 +69,7 @@ def put_bomb(player, map, items, enemies, map_value, level):
     for direction in direction_list:
         x = player["x"]
         y = player["y"]
-        for i in player["bomb_range"]:
+        for i in range(player["bomb_range"]):
             x += direction[0]
             y += direction[1]
             if 0 <= x < len(map) and 0 <= y < len(map[0]):
