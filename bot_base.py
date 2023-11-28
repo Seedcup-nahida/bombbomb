@@ -2,7 +2,7 @@ from enum import Enum
 
 from req import ActionType
 from config import config
-from resp import ObjType, ActionResp
+from resp import ObjType, ActionResp, BombStatus
 
 direction_list = ((0, -1), (0, 1), (1, 0), (-1, 0))  # 左，右，下，上 unchangeable
 
@@ -82,7 +82,8 @@ def packetDecode(recv_data: ActionResp, player_id) -> dict:
                     data["players"].append(obj_property)
                 elif obj.type == ObjType.Bomb:
                     block_type |= BlockType.BOMB.value
-                    block_type |= BlockType.BLOCK.value  # 炸弹也是挡路的
+                    if obj_property["bomb_status"] == BombStatus.BOMB_SILENT:
+                        block_type |= BlockType.BLOCK.value  # 静止的炸弹是挡路的
                     data["bombs"].append(bombDecode(data["round"], block, obj_property))
                 elif obj.type == ObjType.Item:
                     block_type |= BlockType.ITEM.value

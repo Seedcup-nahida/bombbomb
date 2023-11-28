@@ -3,7 +3,7 @@
 
   "game_max_round": 1200,
   "game_print_map": true,
-  "game_print_map_ascii": true,
+  "game_print_map_ascii": false,
   "map_size": 15,
   "player_num": 2,
   "player_hp": 1,
@@ -16,7 +16,7 @@
   "shield_time": 30,
   "invincible_time": 15,
   "mark_kill": 10000,
-  "mark_dead": 12000,
+  "mark_dead": 0,
   "mark_pick_potion": 100,
   "mark_bomb_mud": 10,
   "potion_probability": 50,
@@ -26,8 +26,8 @@
   "result_path": "result.json",
   "black_list":[],
 
-  "timer_initial_value": 500,
-  "round_interval_value": 500,
+  "timer_initial_value": 350,
+  "round_interval_value": 350,
   "server_max_connection_num": 10,
   "epoll_max_events_num": 100,
   "epoll_timeout": 10,
