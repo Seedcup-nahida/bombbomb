@@ -22,6 +22,8 @@ class BlockType(Enum):
         return self.value
 
     def match(self, block_type: int) -> bool:
+        if isinstance(block_type, BlockType):
+            block_type = block_type.value
         if self.value == 0:
             return block_type == 0
         return self.value & block_type != 0

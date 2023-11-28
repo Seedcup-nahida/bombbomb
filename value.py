@@ -159,6 +159,12 @@ def init_value(item_type, level, player, enemies, map, x, y):
         if player["hp"] == 3:
             return 2
         return 3
+    elif item_type == ItemType.GLOVES:
+        if player["has_gloves"]:
+            return 1
+        return 4
+    elif item_type == ItemType.SPEED:
+        return 3
 
         # 可能需要参数判断对战是否执行
     elif item_type == ItemType.HP:
